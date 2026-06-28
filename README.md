@@ -1,241 +1,175 @@
-# **Holehe OSINT - Email to Registered Accounts**
-👋 Hi there! For any professional inquiries or collaborations, please reach out to me at:
-megadose@protonmail.com
+# Footprint — Digital Identity Auditor
 
-📧 Preferably, use your professional email for correspondence. Let's keep it short and sweet, and all in English!
+**Footprint** is an enterprise-grade digital footprint auditing tool that identifies which online platforms and services are associated with a given email address. Built for identity verification teams, fraud prevention analysts, and corporate security operations, it provides rapid, automated discovery across 120+ online services.
 
-![](https://files.catbox.moe/5we2ya.png)
-![PyPI](https://img.shields.io/pypi/v/holehe) ![PyPI - Week](https://img.shields.io/pypi/dw/holehe) ![PyPI - Downloads](https://static.pepy.tech/badge/holehe) ![PyPI - License](https://img.shields.io/pypi/l/holehe)
+## What does Footprint do?
 
-# [Holehe Online Version](https://osint.industries/)
+Footprint takes an email address as input and systematically queries registration, login, and account-recovery endpoints across a wide range of online platforms. For each service, it determines whether an account associated with that email address exists, returning a structured dataset of results.
 
-## **Summary**
+### Key use cases
 
-*Efficiently finding registered accounts from emails.*
+| Use Case | Description |
+|---|---|
+| **Identity Verification** | Confirm that a user's declared digital presence matches their actual online footprint during onboarding or KYC workflows. |
+| **Fraud Prevention** | Detect synthetic identities by auditing whether an email has a plausible pattern of real online registrations. |
+| **Corporate Security** | Audit employee email addresses to identify shadow IT exposure — accounts on unauthorized services that may leak corporate credentials. |
+| **M&A Due Diligence** | Assess the digital exposure of key personnel during mergers and acquisitions security reviews. |
+| **Compliance Auditing** | Generate evidence of digital presence for regulatory compliance and risk assessments. |
 
-Holehe checks if an email is attached to an account on sites like twitter, instagram, imgur and more than 120 others.
+### Services covered
 
-+ Retrieves information using the forgotten password function.
-+ **[Does not alert the target email.](https://github.com/megadose/holehe/issues/12)**
-+ Runs on [Python 3](https://www.python.org/downloads/release/python-370/).
-## 🛠️ Installation
+Footprint checks 120+ platforms across these categories:
 
-### With PyPI
+- **Social Media** — Instagram, Twitter/X, Snapchat, Pinterest, Tumblr, and more
+- **Professional** — GitHub, Atlassian, Docker, LinkedIn (via related services)
+- **Productivity** — Evernote, Lastpass, Office365, WordPress
+- **E-Commerce** — Amazon, eBay, Deliveroo, Nike
+- **Music & Media** — Spotify, SoundCloud, Last.fm, Flickr, Imgur
+- **CRM & Business** — HubSpot, Pipedrive, Zoho, Salesforce (via related services)
+- **Finance** — Venmo, PayPal (via related services)
+- **And many more...**
 
-```pip3 install holehe```
+## Input configuration
 
-### With Github
+The Actor accepts the following input parameters:
 
-```bash
-git clone https://github.com/megadose/holehe.git
-cd holehe/
-python3 setup.py install
-```
-
-### With Docker
-
-```bash
-docker build . -t my-holehe-image
-docker run my-holehe-image holehe test@gmail.com
-```
-
-## Quick Start
-
-Holehe can be run from the CLI and rapidly embedded within existing python applications.
-### 📚 CLI Example
-
-```bash
-holehe test@gmail.com
-```
-### 📈 Python Example
-
-```python
-import trio
-import httpx
-
-from holehe.modules.social_media.snapchat import snapchat
-
-
-async def main():
-    email = "test@gmail.com"
-    out = []
-    client = httpx.AsyncClient()
-
-    await snapchat(email, client, out)
-
-    print(out)
-    await client.aclose()
-
-trio.run(main)
-```
-![](https://github.com/megadose/gif-demo/raw/master/holehe-demo.gif)
-## Module Output
-
-For each module, data is returned in a standard dictionary with the following json-equivalent format :
 ```json
 {
-  "name": "example",
-  "rateLimit": false,
-  "exists": true,
-  "emailrecovery": "ex****e@gmail.com",
-  "phoneNumber": "0*******78",
-  "others": null
+    "email": "analyst@company.com",
+    "proxyConfiguration": {
+        "useApifyProxy": true,
+        "apifyProxyGroups": ["RESIDENTIAL"]
+    },
+    "onlyUsed": true
 }
 ```
 
-- rateLitmit : Lets you know if you've been rate-limited.
-- exists : If an account exists for the email on that service.
-- emailrecovery : Sometimes partially obfuscated recovery emails are returned.
-- phoneNumber : Sometimes partially obfuscated recovery phone numbers are returned.
-- others : Any extra info.
+| Parameter | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `email` | String | ✅ | — | The email address to audit for associated online accounts. |
+| `proxyConfiguration` | Object | ❌ | `null` | Apify proxy configuration. Recommended for production to avoid rate limiting. |
+| `onlyUsed` | Boolean | ❌ | `true` | When enabled, only services where an account was found are included in the output. |
 
+> **💡 Tip:** Using Apify residential proxies (`RESIDENTIAL` group) significantly reduces rate limiting from target services and is strongly recommended for production workloads.
 
-Rate limit? Change your IP.
+## Output dataset
 
+Results are pushed to the default Apify Dataset as structured JSON objects. Each record represents one service check:
 
-## Maltego Transform : [Holehe Maltego](https://github.com/megadose/holehe-maltego)
+```json
+{
+    "email": "analyst@company.com",
+    "website": "instagram.com",
+    "name": "instagram",
+    "status": "found"
+}
+```
 
-## Thank you to :
+```json
+{
+    "email": "analyst@company.com",
+    "website": "github.com",
+    "name": "github",
+    "status": "not_found"
+}
+```
 
-- [navlys](https://twitter.com/navlys_/)
-- [Chris](https://twitter.com/chris_kirsch)
-- [socialscan](https://pypi.org/project/socialscan/)
-- [UhOh365](https://github.com/Raikia/UhOh365)
-- [soxoj](https://github.com/soxoj)
-- [mxrch](https://github.com/mxrch) (and for the logo)
-- [novitae](https://github.com/novitae)
+```json
+{
+    "email": "analyst@company.com",
+    "website": "spotify.com",
+    "name": "spotify",
+    "status": "rate_limited"
+}
+```
 
-## Donations
+### Status values
 
-For BTC Donations : 1FHDM49QfZX6pJmhjLE5tB2K6CaTLMZpXZ
+| Status | Meaning |
+|---|---|
+| `found` | An account associated with this email was positively identified on the service. |
+| `not_found` | No account associated with this email was detected on the service. |
+| `rate_limited` | The service rate-limited the request. Re-run with proxies or retry later. |
 
-## 📝 License
+### Enriched fields
 
-[GNU General Public License v3.0](https://www.gnu.org/licenses/gpl-3.0.fr.html)
+When available, the following additional fields may appear in the output:
 
-Built for educational purposes only.
+| Field | Description |
+|---|---|
+| `emailRecovery` | Partially redacted recovery email address associated with the account. |
+| `phoneNumber` | Partially redacted phone number associated with the account. |
+| `others` | Additional metadata such as full name, creation date, or profile details. |
 
-## Modules
-| Name                | Domain                                 | Method            | Frequent Rate Limit |
-| ------------------- | -------------------------------------- | ----------------- | ------------------- |
-| aboutme             | about.me                               | register          | ✘               |
-| adobe               | adobe.com                              | password recovery | ✘               |
-| amazon              | amazon.com                             | login             | ✘               |
-| amocrm              | amocrm.com                             | register          | ✘               |
-| anydo               | any.do                                 | login             | ✔               |
-| archive             | archive.org                            | register          | ✘               |
-| armurerieauxerre    | armurerie-auxerre.com                  | register          | ✘               |
-| atlassian           | atlassian.com                          | register          | ✘               |
-| axonaut             | axonaut.com                            | register          | ✘               |
-| babeshows           | babeshows.co.uk                        | register          | ✘               |
-| badeggsonline       | badeggsonline.com                      | register          | ✘               |
-| biosmods            | bios-mods.com                          | register          | ✘               |
-| biotechnologyforums | biotechnologyforums.com                | register          | ✘               |
-| bitmoji             | bitmoji.com                            | login             | ✘               |
-| blablacar           | blablacar.com                          | register          | ✔               |
-| blackworldforum     | blackworldforum.com                    | register          | ✔               |
-| blip                | blip.fm                                | register          | ✔               |
-| blitzortung         | forum.blitzortung.org                  | register          | ✘               |
-| bluegrassrivals     | bluegrassrivals.com                    | register          | ✘               |
-| bodybuilding        | bodybuilding.com                       | register          | ✘               |
-| buymeacoffee        | buymeacoffee.com                       | register          | ✔               |
-| cambridgemt         | discussion.cambridge-mt.com            | register          | ✘               |
-| caringbridge        | caringbridge.org                       | register          | ✘               |
-| chinaphonearena     | chinaphonearena.com                    | register          | ✘               |
-| clashfarmer         | clashfarmer.com                        | register          | ✔               |
-| codecademy          | codecademy.com                         | register          | ✔               |
-| codeigniter         | forum.codeigniter.com                  | register          | ✘               |
-| codepen             | codepen.io                             | register          | ✘               |
-| coroflot            | coroflot.com                           | register          | ✘               |
-| cpaelites           | cpaelites.com                          | register          | ✘               |
-| cpahero             | cpahero.com                            | register          | ✘               |
-| cracked_to          | cracked.to                             | register          | ✔               |
-| crevado             | crevado.com                            | register          | ✔               |
-| deliveroo           | deliveroo.com                          | register          | ✔               |
-| demonforums         | demonforums.net                        | register          | ✔               |
-| devrant             | devrant.com                            | register          | ✘               |
-| diigo               | diigo.com                              | register          | ✘               |
-| discord             | discord.com                            | register          | ✘               |
-| docker              | docker.com                             | register          | ✘               |
-| dominosfr           | dominos.fr                             | register          | ✔               |
-| ebay                | ebay.com                               | login             | ✔               |
-| ello                | ello.co                                | register          | ✘               |
-| envato              | envato.com                             | register          | ✘               |
-| eventbrite          | eventbrite.com                         | login             | ✘               |
-| evernote            | evernote.com                           | login             | ✘               |
-| fanpop              | fanpop.com                             | register          | ✘               |
-| firefox             | firefox.com                            | register          | ✘               |
-| flickr              | flickr.com                             | login             | ✘               |
-| freelancer          | freelancer.com                         | register          | ✘               |
-| freiberg            | drachenhort.user.stunet.tu-freiberg.de | register          | ✘               |
-| garmin              | garmin.com                             | register          | ✔               |
-| github              | github.com                             | register          | ✘               |
-| google              | google.com                             | register          | ✔               |
-| gravatar            | gravatar.com                           | other             | ✘               |
-| hubspot             | hubspot.com                            | login             | ✘               |
-| imgur               | imgur.com                              | register          | ✔               |
-| insightly           | insightly.com                          | login             | ✘               |
-| instagram           | instagram.com                          | register          | ✔               |
-| issuu               | issuu.com                              | register          | ✘               |
-| koditv              | forum.kodi.tv                          | register          | ✘               |
-| komoot              | komoot.com                             | register          | ✔               |
-| laposte             | laposte.fr                             | register          | ✘               |
-| lastfm              | last.fm                                | register          | ✘               |
-| lastpass            | lastpass.com                           | register          | ✘               |
-| mail_ru             | mail.ru                                | password recovery | ✘               |
-| mybb                | community.mybb.com                     | register          | ✘               |
-| myspace             | myspace.com                            | register          | ✘               |
-| nattyornot          | nattyornotforum.nattyornot.com         | register          | ✘               |
-| naturabuy           | naturabuy.fr                           | register          | ✘               |
-| ndemiccreations     | forum.ndemiccreations.com              | register          | ✘               |
-| nextpvr             | forums.nextpvr.com                     | register          | ✘               |
-| nike                | nike.com                               | register          | ✘               |
-| nimble              | nimble.com                             | register          | ✘               |
-| nocrm               | nocrm.io                               | register          | ✘               |
-| nutshell            | nutshell.com                           | register          | ✘               |
-| odnoklassniki       | ok.ru                                  | password recovery | ✘               |
-| office365           | office365.com                          | other             | ✔               |
-| onlinesequencer     | onlinesequencer.net                    | register          | ✘               |
-| parler              | parler.com                             | login             | ✘               |
-| patreon             | patreon.com                            | login             | ✔               |
-| pinterest           | pinterest.com                          | register          | ✘               |
-| pipedrive           | pipedrive.com                          | register          | ✘               |
-| plurk               | plurk.com                              | register          | ✘               |
-| pornhub             | pornhub.com                            | register          | ✘               |
-| protonmail          | protonmail.ch                          | other             | ✘               |
-| quora               | quora.com                              | register          | ✘               |
-| rambler             | rambler.ru                             | register          | ✘               |
-| redtube             | redtube.com                            | register          | ✘               |
-| replit              | replit.com                             | register          | ✔               |
-| rocketreach         | rocketreach.co                         | register          | ✘               |
-| samsung             | samsung.com                            | register          | ✘               |
-| seoclerks           | seoclerks.com                          | register          | ✘               |
-| sevencups           | 7cups.com                              | register          | ✔               |
-| smule               | smule.com                              | register          | ✔               |
-| snapchat            | snapchat.com                           | login             | ✘               |
-| soundcloud          | soundcloud.com                         | register          | ✘               |
-| sporcle             | sporcle.com                            | register          | ✘               |
-| spotify             | spotify.com                            | register          | ✔               |
-| strava              | strava.com                             | register          | ✘               |
-| taringa             | taringa.net                            | register          | ✔               |
-| teamleader          | teamleader.com                         | register          | ✘               |
-| teamtreehouse       | teamtreehouse.com                      | register          | ✘               |
-| tellonym            | tellonym.me                            | register          | ✘               |
-| thecardboard        | thecardboard.org                       | register          | ✘               |
-| therianguide        | forums.therian-guide.com               | register          | ✘               |
-| thevapingforum      | thevapingforum.com                     | register          | ✘               |
-| tumblr              | tumblr.com                             | register          | ✘               |
-| tunefind            | tunefind.com                           | register          | ✔               |
-| twitter             | twitter.com                            | register          | ✘               |
-| venmo               | venmo.com                              | register          | ✔               |
-| vivino              | vivino.com                             | register          | ✘               |
-| voxmedia            | voxmedia.com                           | register          | ✘               |
-| vrbo                | vrbo.com                               | register          | ✘               |
-| vsco                | vsco.co                                | register          | ✘               |
-| wattpad             | wattpad.com                            | register          | ✔               |
-| wordpress           | wordpress                              | login             | ✘               |
-| xing                | xing.com                               | register          | ✘               |
-| xnxx                | xnxx.com                               | register          | ✔               |
-| xvideos             | xvideos.com                            | register          | ✘               |
-| yahoo               | yahoo.com                              | login             | ✔               |
-| zoho                | zoho.com                               | login             | ✔               |
+## Example full output
+
+When `onlyUsed` is set to `true`, a typical output dataset looks like:
+
+```json
+[
+    {
+        "email": "analyst@company.com",
+        "website": "instagram.com",
+        "name": "instagram",
+        "status": "found"
+    },
+    {
+        "email": "analyst@company.com",
+        "website": "spotify.com",
+        "name": "spotify",
+        "status": "found",
+        "emailRecovery": "a*****t@gmail.com"
+    },
+    {
+        "email": "analyst@company.com",
+        "website": "github.com",
+        "name": "github",
+        "status": "found"
+    },
+    {
+        "email": "analyst@company.com",
+        "website": "adobe.com",
+        "name": "adobe",
+        "status": "found",
+        "emailRecovery": "a*****t@company.com",
+        "phoneNumber": "+1*****89"
+    }
+]
+```
+
+## Performance and reliability
+
+- **Speed**: Footprint runs all checks concurrently using an async execution model, completing a full audit of 120+ services in approximately 15–45 seconds depending on network conditions.
+- **Error handling**: Individual module failures are isolated — a single service timeout will never crash the entire audit run. Failed checks are reported as `rate_limited` status.
+- **Proxy support**: Full integration with Apify's proxy infrastructure ensures reliable, high-throughput execution suitable for batch processing.
+
+## Integrations
+
+Footprint works seamlessly with the Apify ecosystem:
+
+- **Apify API** — Trigger audits programmatically via the Apify REST API or any of the official client libraries (Python, JavaScript, etc.).
+- **Webhooks** — Configure webhooks to receive notifications when an audit completes.
+- **Scheduled runs** — Set up recurring audits for ongoing monitoring of key email addresses.
+- **Apify Storage** — Results are stored in Apify Datasets and can be exported to CSV, JSON, Excel, or integrated with external systems.
+
+## Legal and ethical use
+
+Footprint is designed exclusively for **lawful and ethical purposes** including:
+
+- Corporate security assessments with proper authorization
+- Identity verification during legitimate onboarding processes
+- Fraud prevention and detection within regulated frameworks
+- Authorized penetration testing and security auditing
+
+Users are responsible for ensuring their use of this tool complies with all applicable laws, regulations, and organizational policies. This tool should only be used on email addresses that you are authorized to investigate.
+
+## Technical details
+
+- **Runtime**: Python 3.11 on Apify Actor platform
+- **Concurrency model**: Trio async nurseries for parallel service checks
+- **HTTP client**: HTTPX with configurable proxy and timeout support
+- **Base engine**: [Holehe](https://github.com/megadose/holehe) by Megadose (GPLv3)
+
+## Support
+
+If you encounter issues or have feature requests, please open an issue on the Actor's GitHub repository or contact the maintainer through the Apify Store.

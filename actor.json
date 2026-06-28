@@ -1,0 +1,41 @@
+{
+    "actorSpecification": 1,
+    "name": "footprint",
+    "title": "Footprint — Digital Identity Auditor",
+    "description": "Enterprise-grade digital footprint auditor. Discovers which online services and platforms are associated with a given email address for identity verification, fraud prevention, and corporate security assessments.",
+    "version": "1.0.0",
+    "buildTag": "latest",
+    "environmentVariables": [],
+    "input": {
+        "title": "Footprint Input",
+        "description": "Configure the email address to audit and optional proxy settings.",
+        "type": "object",
+        "schemaVersion": 1,
+        "required": ["email"],
+        "properties": {
+            "email": {
+                "title": "Email Address",
+                "type": "string",
+                "description": "The target email address to audit for associated online accounts and digital footprint.",
+                "editor": "textfield",
+                "prefill": "test@example.com"
+            },
+            "proxyConfiguration": {
+                "title": "Proxy Configuration",
+                "type": "object",
+                "description": "Optional Apify proxy configuration. Recommended for production runs to avoid rate limiting.",
+                "editor": "proxy",
+                "sectionCaption": "Proxy Settings",
+                "sectionDescription": "Using proxies significantly reduces the chance of being rate-limited by target services."
+            },
+            "onlyUsed": {
+                "title": "Only Show Found Accounts",
+                "type": "boolean",
+                "description": "If enabled, the output dataset will only contain services where an associated account was positively identified.",
+                "default": true,
+                "editor": "checkbox"
+            }
+        }
+    },
+    "dockerfile": "./Dockerfile"
+}
