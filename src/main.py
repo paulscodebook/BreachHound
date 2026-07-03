@@ -162,31 +162,6 @@ def format_result(email: str, raw: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
-# Proxy resolution
-# ---------------------------------------------------------------------------
-def resolve_proxy_url(proxy_config: dict | None) -> str | None:
-    """
-    Extract a usable proxy URL from an Apify proxy configuration object.
-    Falls back to the standard Apify residential proxy endpoint when no
-    explicit URL is provided.
-    """
-    if not proxy_config:
-        return None
-
-    # If the SDK already resolved a proxyUrl, use it directly
-    if proxy_config.get("proxyUrl"):
-        return proxy_config["proxyUrl"]
-
-    # Build the Apify proxy URL from group configuration
-    password = proxy_config.get("password") or ""
-    groups = proxy_config.get("apifyProxyGroups") or []
-    if password:
-        group_part = "+".join(groups) if groups else "RESIDENTIAL"
-        return f"http://auto:{password}@proxy.apify.com:8000"
-
-    return None
-
-
 # ---------------------------------------------------------------------------
 # Main Actor logic
 # ---------------------------------------------------------------------------
@@ -205,7 +180,9 @@ async def main() -> None:
 
         proxy_config = actor_input.get("proxyConfiguration")
         only_used: bool = actor_input.get("onlyUsed", True)
-        proxy_url = resolve_proxy_url(proxy_config)
+        
+        proxy_cfg = await Actor.create_proxy_configuration(actor_proxy_input=proxy_config)
+        proxy_url = await proxy_cfg.new_url() if proxy_cfg else None
 
         Actor.log.info(f"🔍 Auditing digital footprint for: {email}")
         Actor.log.info(f"   Proxy: {'enabled' if proxy_url else 'direct (no proxy)'}")
