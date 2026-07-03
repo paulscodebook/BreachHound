@@ -55,7 +55,14 @@ def get_check_functions(modules: dict) -> list:
 # ---------------------------------------------------------------------------
 # Trio ↔ asyncio bridge
 # ---------------------------------------------------------------------------
-def _run_holehe_checks_in_trio(email: str, websites: list, proxy_url: str | None, timeout: int) -> list:
+def _run_holehe_checks_in_trio(
+    email: str,
+    websites: list,
+    proxy_url: str | None,
+    timeout: int,
+    max_retries: int,
+    retry_delay: int,
+) -> list:
     """
     Synchronously execute all Holehe checks inside a ``trio.run()`` context.
     Returns the aggregated list of raw result dicts.
@@ -75,17 +82,33 @@ def _run_holehe_checks_in_trio(email: str, websites: list, proxy_url: str | None
 
             async with trio.open_nursery() as nursery:
                 for website_fn in websites:
-                    nursery.start_soon(_launch_module, website_fn, email, client, out)
+                    nursery.start_soon(
+                        _launch_module,
+                        website_fn,
+                        email,
+                        client,
+                        out,
+                        max_retries,
+                        retry_delay,
+                    )
 
             return out
 
     return trio.run(_trio_main)
 
 
-async def _launch_module(module_fn, email: str, client: httpx.AsyncClient, out: list):
+async def _launch_module(
+    module_fn,
+    email: str,
+    client: httpx.AsyncClient,
+    out: list,
+    max_retries: int,
+    retry_delay: int,
+):
     """
     Wrapper around each Holehe site-check module.
-    Mirrors ``holehe.core.launch_module`` but with broader exception handling.
+    Mirrors ``holehe.core.launch_module`` but with broader exception handling
+    and a configurable retry mechanism with exponential backoff.
     """
     # Build a name→domain lookup identical to holehe.core.launch_module
     _domain_map = {
@@ -114,21 +137,48 @@ async def _launch_module(module_fn, email: str, client: httpx.AsyncClient, out: 
         "pipedrive": "pipedrive.com", "zoho": "zoho.com",
     }
 
-    try:
-        await module_fn(email, client, out)
-    except Exception:
-        name = str(module_fn).split("<function ")[1].split(" ")[0] if "<function " in str(module_fn) else "unknown"
-        domain = _domain_map.get(name, "unknown")
-        out.append({
-            "name": name,
-            "domain": domain,
-            "rateLimit": True,
-            "exists": False,
-            "error": True,
-            "emailrecovery": None,
-            "phoneNumber": None,
-            "others": None,
-        })
+    # Attempt to resolve the module's target name/domain
+    name = str(module_fn).split("<function ")[1].split(" ")[0] if "<function " in str(module_fn) else "unknown"
+    if name == "unknown":
+        name = getattr(module_fn, "__name__", "unknown")
+    domain = _domain_map.get(name, "unknown")
+
+    for attempt in range(max_retries + 1):
+        temp_out = []
+        failed = False
+        try:
+            await module_fn(email, client, temp_out)
+        except Exception:
+            failed = True
+
+        # Check if the module successfully executed and returned valid results
+        if not failed and temp_out:
+            # Check if any result indicates rate limiting or network error
+            rate_limited = any(item.get("rateLimit") or item.get("error") for item in temp_out)
+            if not rate_limited:
+                # Successful execution (either exists: True or False with no rateLimit/error)
+                out.extend(temp_out)
+                return
+
+        # If it failed or was rate-limited, wait with backoff if we have retries left
+        if attempt < max_retries:
+            sleep_time = retry_delay * (2 ** attempt)
+            await trio.sleep(sleep_time)
+        else:
+            # All retry attempts exhausted, push the last result to out
+            if temp_out:
+                out.extend(temp_out)
+            else:
+                out.append({
+                    "name": name,
+                    "domain": domain,
+                    "rateLimit": True,
+                    "exists": False,
+                    "error": True,
+                    "emailrecovery": None,
+                    "phoneNumber": None,
+                    "others": None,
+                })
 
 
 # ---------------------------------------------------------------------------
@@ -180,6 +230,8 @@ async def main() -> None:
 
         proxy_config = actor_input.get("proxyConfiguration")
         only_used: bool = actor_input.get("onlyUsed", True)
+        max_retries: int = int(actor_input.get("maxRetries", 3))
+        retry_delay: int = int(actor_input.get("retryDelay", 1))
         
         proxy_cfg = await Actor.create_proxy_configuration(actor_proxy_input=proxy_config)
         proxy_url = await proxy_cfg.new_url() if proxy_cfg else None
@@ -187,6 +239,7 @@ async def main() -> None:
         Actor.log.info(f"🔍 Auditing digital footprint for: {email}")
         Actor.log.info(f"   Proxy: {'enabled' if proxy_url else 'direct (no proxy)'}")
         Actor.log.info(f"   Filter: {'only found accounts' if only_used else 'all results'}")
+        Actor.log.info(f"   Retries: {max_retries} attempts (delay: {retry_delay}s)")
 
         # ── Discover Holehe site modules ────────────────────────────────
         try:
@@ -209,6 +262,8 @@ async def main() -> None:
                 websites,
                 proxy_url,
                 DEFAULT_TIMEOUT,
+                max_retries,
+                retry_delay,
             )
         except Exception as exc:
             Actor.log.error(f"Holehe execution error: {exc}")

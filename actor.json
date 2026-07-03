@@ -34,6 +34,24 @@
                 "description": "If enabled, the output dataset will only contain services where an associated account was positively identified.",
                 "default": true,
                 "editor": "checkbox"
+            },
+            "maxRetries": {
+                "title": "Max Retries",
+                "type": "integer",
+                "description": "Maximum number of retry attempts for checks that get rate-limited or fail due to network errors.",
+                "default": 3,
+                "minimum": 0,
+                "maximum": 10,
+                "editor": "number"
+            },
+            "retryDelay": {
+                "title": "Retry Delay (seconds)",
+                "type": "integer",
+                "description": "The delay in seconds before retrying a rate-limited check.",
+                "default": 1,
+                "minimum": 0,
+                "maximum": 30,
+                "editor": "number"
             }
         }
     },
