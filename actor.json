@@ -1,13 +1,13 @@
 {
     "actorSpecification": 1,
-    "name": "footprint",
-    "title": "Footprint — Digital Identity Auditor",
+    "name": "breachhound",
+    "title": "BreachHound — Digital Identity Auditor",
     "description": "Enterprise-grade digital footprint auditor. Discovers which online services and platforms are associated with a given email address for identity verification, fraud prevention, and corporate security assessments.",
     "version": "1.0.0",
     "buildTag": "latest",
     "environmentVariables": [],
     "input": {
-        "title": "Footprint Input",
+        "title": "BreachHound Input",
         "description": "Configure the email address to audit and optional proxy settings.",
         "type": "object",
         "schemaVersion": 1,

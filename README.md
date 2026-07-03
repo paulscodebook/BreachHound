@@ -1,10 +1,10 @@
-# Footprint — Digital Identity Auditor
+# BreachHound — Digital Identity Auditor
 
-**Footprint** is an enterprise-grade digital footprint auditing tool that identifies which online platforms and services are associated with a given email address. Built for identity verification teams, fraud prevention analysts, and corporate security operations, it provides rapid, automated discovery across 120+ online services.
+**BreachHound** is an enterprise-grade digital footprint auditing tool that identifies which online platforms and services are associated with a given email address. Built for identity verification teams, fraud prevention analysts, and corporate security operations, it provides rapid, automated discovery across 120+ online services.
 
-## What does Footprint do?
+## What does BreachHound do?
 
-Footprint takes an email address as input and systematically queries registration, login, and account-recovery endpoints across a wide range of online platforms. For each service, it determines whether an account associated with that email address exists, returning a structured dataset of results.
+BreachHound takes an email address as input and systematically queries registration, login, and account-recovery endpoints across a wide range of online platforms. For each service, it determines whether an account associated with that email address exists, returning a structured dataset of results.
 
 ### Key use cases
 
@@ -18,7 +18,7 @@ Footprint takes an email address as input and systematically queries registratio
 
 ### Services covered
 
-Footprint checks 120+ platforms across these categories:
+BreachHound checks 120+ platforms across these categories:
 
 - **Social Media** — Instagram, Twitter/X, Snapchat, Pinterest, Tumblr, and more
 - **Professional** — GitHub, Atlassian, Docker, LinkedIn (via related services)
@@ -40,7 +40,9 @@ The Actor accepts the following input parameters:
         "useApifyProxy": true,
         "apifyProxyGroups": ["RESIDENTIAL"]
     },
-    "onlyUsed": true
+    "onlyUsed": true,
+    "maxRetries": 3,
+    "retryDelay": 1
 }
 ```
 
@@ -49,6 +51,8 @@ The Actor accepts the following input parameters:
 | `email` | String | ✅ | — | The email address to audit for associated online accounts. |
 | `proxyConfiguration` | Object | ❌ | `null` | Apify proxy configuration. Recommended for production to avoid rate limiting. |
 | `onlyUsed` | Boolean | ❌ | `true` | When enabled, only services where an account was found are included in the output. |
+| `maxRetries` | Integer | ❌ | `3` | Maximum number of retry attempts for checks that get rate-limited or fail due to network errors. |
+| `retryDelay` | Integer | ❌ | `1` | The delay in seconds before retrying a rate-limited check (uses exponential backoff). |
 
 > **💡 Tip:** Using Apify residential proxies (`RESIDENTIAL` group) significantly reduces rate limiting from target services and is strongly recommended for production workloads.
 
@@ -139,13 +143,14 @@ When `onlyUsed` is set to `true`, a typical output dataset looks like:
 
 ## Performance and reliability
 
-- **Speed**: Footprint runs all checks concurrently using an async execution model, completing a full audit of 120+ services in approximately 15–45 seconds depending on network conditions.
+- **Speed**: BreachHound runs all checks concurrently using an async execution model, completing a full audit of 120+ services in approximately 15–45 seconds depending on network conditions.
 - **Error handling**: Individual module failures are isolated — a single service timeout will never crash the entire audit run. Failed checks are reported as `rate_limited` status.
 - **Proxy support**: Full integration with Apify's proxy infrastructure ensures reliable, high-throughput execution suitable for batch processing.
+- **Retry mechanism**: Built-in retries with exponential backoff help navigate transient rate limits and network errors automatically.
 
 ## Integrations
 
-Footprint works seamlessly with the Apify ecosystem:
+BreachHound works seamlessly with the Apify ecosystem:
 
 - **Apify API** — Trigger audits programmatically via the Apify REST API or any of the official client libraries (Python, JavaScript, etc.).
 - **Webhooks** — Configure webhooks to receive notifications when an audit completes.
@@ -154,7 +159,7 @@ Footprint works seamlessly with the Apify ecosystem:
 
 ## Legal and ethical use
 
-Footprint is designed exclusively for **lawful and ethical purposes** including:
+BreachHound is designed exclusively for **lawful and ethical purposes** including:
 
 - Corporate security assessments with proper authorization
 - Identity verification during legitimate onboarding processes
@@ -169,6 +174,9 @@ Users are responsible for ensuring their use of this tool complies with all appl
 - **Concurrency model**: Trio async nurseries for parallel service checks
 - **HTTP client**: HTTPX with configurable proxy and timeout support
 - **Base engine**: [Holehe](https://github.com/megadose/holehe) by Megadose (GPLv3)
+
+## Creator
+Created and maintained by **[Blukaze.com](https://blukaze.com)**.
 
 ## Support
 
