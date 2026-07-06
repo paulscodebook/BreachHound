@@ -173,7 +173,6 @@ Users are responsible for ensuring their use of this tool complies with all appl
 - **Runtime**: Python 3.11 on Apify Actor platform
 - **Concurrency model**: Trio async nurseries for parallel service checks
 - **HTTP client**: HTTPX with configurable proxy and timeout support
-- **Base engine**: [Holehe](https://github.com/megadose/holehe) by Megadose (GPLv3)
 
 ## Creator
 Created and maintained by **[Blukaze.com](https://blukaze.com)**.
