@@ -1,0 +1,51 @@
+{
+    "title": "BreachHound Input Schema",
+    "description": "Configure the email address to audit and settings for the scan.",
+    "type": "object",
+    "schemaVersion": 1,
+    "required": ["email"],
+    "properties": {
+        "email": {
+            "title": "Email Address",
+            "type": "string",
+            "description": "Enter the email address you want to audit for associated online accounts.",
+            "editor": "textfield",
+            "prefill": "john.doe@example.com",
+            "format": "email"
+        },
+        "onlyUsed": {
+            "title": "Return Only Found Accounts",
+            "type": "boolean",
+            "description": "When enabled, only services where an account was found will be included in the output. Disable this to return all services, including \"not_found\" and \"rate_limited\".",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "useResidentialProxy": {
+            "title": "Use Apify Residential Proxies (Recommended)",
+            "type": "boolean",
+            "description": "Uses Apify Residential Proxies to significantly reduce rate limiting and improve detection coverage. If disabled, requests will be sent directly.",
+            "default": true,
+            "editor": "checkbox"
+        },
+        "maxRetries": {
+            "title": "Maximum Retries",
+            "type": "integer",
+            "description": "Maximum number of retry attempts for failed requests.",
+            "default": 3,
+            "minimum": 0,
+            "maximum": 10,
+            "editor": "number",
+            "sectionCaption": "Advanced Settings",
+            "sectionDescription": "Optional configuration for handling rate limits and timeouts."
+        },
+        "retryDelay": {
+            "title": "Retry Delay (seconds)",
+            "type": "integer",
+            "description": "Delay between retry attempts.",
+            "default": 1,
+            "minimum": 0,
+            "maximum": 30,
+            "editor": "number"
+        }
+    }
+}

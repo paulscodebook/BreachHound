@@ -6,54 +6,6 @@
     "version": "1.0.0",
     "buildTag": "latest",
     "environmentVariables": [],
-    "input": {
-        "title": "BreachHound Input",
-        "description": "Configure the email address to audit and optional proxy settings.",
-        "type": "object",
-        "schemaVersion": 1,
-        "required": ["email"],
-        "properties": {
-            "email": {
-                "title": "Email Address",
-                "type": "string",
-                "description": "The target email address to audit for associated online accounts and digital footprint.",
-                "editor": "textfield",
-                "prefill": "test@example.com"
-            },
-            "proxyConfiguration": {
-                "title": "Proxy Configuration",
-                "type": "object",
-                "description": "Optional Apify proxy configuration. Recommended for production runs to avoid rate limiting.",
-                "editor": "proxy",
-                "sectionCaption": "Proxy Settings",
-                "sectionDescription": "Using proxies significantly reduces the chance of being rate-limited by target services."
-            },
-            "onlyUsed": {
-                "title": "Only Show Found Accounts",
-                "type": "boolean",
-                "description": "If enabled, the output dataset will only contain services where an associated account was positively identified.",
-                "default": true,
-                "editor": "checkbox"
-            },
-            "maxRetries": {
-                "title": "Max Retries",
-                "type": "integer",
-                "description": "Maximum number of retry attempts for checks that get rate-limited or fail due to network errors.",
-                "default": 3,
-                "minimum": 0,
-                "maximum": 10,
-                "editor": "number"
-            },
-            "retryDelay": {
-                "title": "Retry Delay (seconds)",
-                "type": "integer",
-                "description": "The delay in seconds before retrying a rate-limited check.",
-                "default": 1,
-                "minimum": 0,
-                "maximum": 30,
-                "editor": "number"
-            }
-        }
-    },
+    "input": "./INPUT_SCHEMA.json",
     "dockerfile": "./Dockerfile"
 }

@@ -228,10 +228,23 @@ async def main() -> None:
             )
             return
 
-        proxy_config = actor_input.get("proxyConfiguration")
         only_used: bool = actor_input.get("onlyUsed", True)
         max_retries: int = int(actor_input.get("maxRetries", 3))
         retry_delay: int = int(actor_input.get("retryDelay", 1))
+
+        # Check for useResidentialProxy flag with backward compatibility support
+        use_residential_proxy = actor_input.get("useResidentialProxy")
+        if use_residential_proxy is not None:
+            if use_residential_proxy:
+                proxy_config = {
+                    "useApifyProxy": True,
+                    "apifyProxyGroups": ["RESIDENTIAL"]
+                }
+            else:
+                proxy_config = None
+        else:
+            # Legacy support fallback
+            proxy_config = actor_input.get("proxyConfiguration")
         
         proxy_cfg = await Actor.create_proxy_configuration(actor_proxy_input=proxy_config)
         proxy_url = await proxy_cfg.new_url() if proxy_cfg else None
