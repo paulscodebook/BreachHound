@@ -7,5 +7,8 @@
     "buildTag": "latest",
     "environmentVariables": [],
     "input": "./INPUT_SCHEMA.json",
+    "storages": {
+        "dataset": "./dataset_schema.json"
+    },
     "dockerfile": "./Dockerfile"
 }
