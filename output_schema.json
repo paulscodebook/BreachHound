@@ -1,0 +1,13 @@
+{
+    "actorOutputSchemaVersion": 1,
+    "title": "BreachHound Output Schema",
+    "type": "object",
+    "properties": {
+        "dataset": {
+            "type": "string",
+            "title": "Audited Accounts Dataset",
+            "description": "The dataset containing all checked websites, name of modules, and whether the accounts were found.",
+            "template": "{{links.apiDefaultDatasetUrl}}/items?format=json"
+        }
+    }
+}
